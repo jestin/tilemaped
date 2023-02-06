@@ -14,6 +14,9 @@
 
 #include "cx16_palette.h"
 
+#include "tsettings.h"
+#include "ttftexture.h"
+
 namespace fs = std::filesystem;
 
 //#define DIRDEL "\"
@@ -52,64 +55,6 @@ class PIDialog;
 class TIDialog;
 class TBDialog;
 class MEDialog;
-
-class TSettings{
-	public:
-		SDL_Renderer *TRenderer;
-		SDL_Window *TWindow;			
-		int WindowWidth=1900;
-		int WindowHeight=1000;
-		int TopBarHeight = 50;
-		int TileSetWidth=200;
-		int TileSetDefaultScale=10;
-		int TileMapScale=3;
-		int TileMapHeight=128;
-		int TileMapWidth=128;		
-		int TileSize=16;
-		int PaletteScale=2;
-		std::string ProjectPath;
-		std::string ProjectPalettePath = "";
-		std::vector<unsigned char> ProjectPalette;
-		bool bProjectHasPalette = false;
-		int mProjectSaveState = 0;
-		int mOpenTileState = 0;
-		int mDeleteUnusedTilesState = 0;
-		std::string mNewTilePath = "";				
-		bool bShowTypeSelection = false;
-		bool bShowPixelGrip = true;
-		bool bShowPixelType = false;
-		bool bShowSelectedTile = true;
-		bool bShowProjectInfo = false;
-		int mSelectedTile = 0;
-		int mTileEdScale = 4;
-		TTF_Font *TFont;
-		TTF_Font *LFont;
-		SDL_Color DefaultBGColor = {0xc0,0xc0,0xc0,0xff};
-		SDL_Color DefaultDarkBGColor = {0xb0,0xb0,0xb0,0xff};
-		SDL_Color DefaultTextColor = {0x20,0x20,0x20,0xff};
-		SDL_Color DefaultBorderColor = {0x00,0x00,0xff,0xff};
-		SDL_Color DefaultButtonColor = {0x90,0x90,0x90,0xff};
-		SDL_Color DefaultButtonBorderColor = {0x20,0x20,0x20,0xff};
-		SDL_Color DefaultGUIBorderColor = {0x20,0x20,0x20,0xff};
-		SDL_Color DefaultHighlightColor = {0xff,0xff,0xff,0xff};
-		SDL_Color AltHighlightColor = {0x00,0xff,0xff,0xff};
-		SDL_Color ErrorTextColor = {0xff,0x00,0x00,0xff};
-		SDL_Color ErrorBorderColor = {0xc0,0x00,0x00,0xff};
-		SDL_Color PixelGridColor = {0x20,0x20,0x20,0xff};
-		std::vector<std::string> mHelpText;
-		std::vector<std::string> mHelpTextMap;
-		std::vector<std::string> mHelpTextTile;
-		int mLastTick = 0;
-		int mCurrentTick = 0;
-		int initSettings();
-		void initHelpText();
-		void printHelpText();		
-		int initTicks();
-		int updateTicks();
-		int getTicks();
-};
-
-TSettings mGlobalSettings;
 
 enum {
 	EMODE_MAP,
@@ -151,112 +96,6 @@ class TEActionUndoStack{
 		void redoClearStack();
 		void undoClearStack();
 };
-
-
-class TTFTexture{
-	public:
-		SDL_Texture *TTFTex=NULL;
-		std::string mTexText;
-		int mTexWidth = 0;
-		int mTexHeight = 0;
-		SDL_Color mTextColor;
-		int loadTTFFromString(std::string cTexText, SDL_Color textColor);
-		int loadTTFFromUTF8(std::string cTexText, SDL_Color textColor);		
-		int loadTTFFromUTF8(std::string cTexText, SDL_Color textColor, TTF_Font *cFont);		
-		SDL_Rect render(int xpos,int ypos);
-
-		std::string mWindow = "\uf2d0";
-		std::string mFloppy = "\ue240"; //Floppy disk		
-		std::string mPrompt = "\uf120"; //Prompt
-		//std::string mPrompt = "\ue7a2"; //TEST prompt good		
-		std::string mFile = "\uf15c"; // File Icon
-//		std::string mBook = "\uf02d"; //lying book
-//		std::string mBook = "\ufd2c"; //ring binder
-		std::string mBook = "\uf405"; //Open Book SEL		
-		//std::string mBook = "\uf129"; Info 1		
-		std::string mInfo = "\uf449"; // Info circle		
-//		std::string mBook = "\uf7d5"  // ? mark
-//		std::string mBook = "\ufc89"; // ? mark box
-};	
-
-int TTFTexture::loadTTFFromUTF8(std::string cTexText, SDL_Color textColor, TTF_Font *cFont){
-	if(TTFTex){
-		SDL_DestroyTexture(TTFTex);
-		TTFTex = NULL;
-	}
-	
-	if(!cTexText.size()){
-		return 1;	
-	}
-
-	
-	mTextColor = textColor;
-
-	mTexText = cTexText;
-
-	SDL_Surface* textSurf =  TTF_RenderUTF8_Solid(cFont, cTexText.c_str(), textColor);
-	if( textSurf != NULL ){
-        	TTFTex = SDL_CreateTextureFromSurface(mGlobalSettings.TRenderer, textSurf);
-		if(TTFTex == NULL){
-			std::cout << "SDL Error: " << SDL_GetError() << std::endl;
-			return 1;
-		} else {
-			mTexWidth = textSurf->w;
-			mTexHeight = textSurf->h;
-		}
-		SDL_FreeSurface(textSurf);
-	}
-	else{
-		std::cout << "SDL_ttf Error: " << TTF_GetError() << std::endl;
-		return 1;
-	}
-
-	return 0;
-}
-
-int TTFTexture::loadTTFFromUTF8(std::string cTexText, SDL_Color textColor){
-	return loadTTFFromUTF8(cTexText, textColor, mGlobalSettings.TFont);
-}
-
-int TTFTexture::loadTTFFromString(std::string cTexText, SDL_Color textColor)
-{
-	if(TTFTex){
-		SDL_DestroyTexture(TTFTex);
-		TTFTex = NULL;
-	}
-	
-	if(!cTexText.size()){
-		return 1;	
-	}
-
-	
-	mTexText = cTexText;
-
-	SDL_Surface* textSurf = TTF_RenderText_Solid(mGlobalSettings.TFont, cTexText.c_str(), textColor);
-	if( textSurf != NULL ){
-        	TTFTex = SDL_CreateTextureFromSurface(mGlobalSettings.TRenderer, textSurf);
-		if(TTFTex == NULL){
-			std::cout << "SDL Error: " << SDL_GetError() << std::endl;
-			return 1;
-		} else {
-			mTexWidth = textSurf->w;
-			mTexHeight = textSurf->h;
-		}
-		SDL_FreeSurface(textSurf);
-	}
-	else{
-		std::cout << "SDL_ttf Error: " << TTF_GetError() << std::endl;
-		return 1;
-	}
-
-	return 0;
-}
-
-SDL_Rect TTFTexture::render(int xpos, int ypos){
-	SDL_Rect renderQuad = {xpos, ypos, mTexWidth, mTexHeight};
-	if(TTFTex) SDL_RenderCopy( mGlobalSettings.TRenderer, TTFTex, NULL, &renderQuad);
-	return renderQuad;
-}
 
 class TTexture{
 	public:
