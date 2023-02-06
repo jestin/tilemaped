@@ -25,7 +25,6 @@ namespace fs = std::filesystem;
 #define DIRDEL std::filesystem::path::preferred_separator
 
 class TTexture;
-class TTFTexture;
 class TPixel; 
 class TPalette;
 class Tile;
